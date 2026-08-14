@@ -8,9 +8,11 @@
   "private": true,
   "scripts": {
     "prepare:runtime": "node scripts/prepare-runtime.cjs",
+    "prepare:runtime:linux": "node scripts/prepare-runtime-linux.cjs",
     "start": "electron .",
     "dist": "npm run prepare:runtime && electron-builder --win nsis",
-    "dist:portable": "npm run prepare:runtime && electron-builder --win portable"
+    "dist:portable": "npm run prepare:runtime && electron-builder --win portable",
+    "dist:linux": "npm run prepare:runtime:linux && electron-builder --linux deb"
   },
   "devDependencies": {
     "electron": "^33.0.0",
@@ -43,13 +45,10 @@
         "from": "node-runtime",
         "to": "node-runtime",
         "filter": [
-          "node.exe",
-          "node_modules/**/*",
-          "npm/**/*",
-          "npm.cmd",
-          "npm.ps1",
-          "LICENSE",
-          "README.md"
+          "**/*",
+          "!**/include/**",
+          "!**/share/**",
+          "!**/*.map"
         ]
       }
     ],
@@ -58,6 +57,15 @@
         "nsis"
       ],
       "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "category": "Development",
+      "icon": "build/icon.png",
+      "maintainer": "dsh-desktop <maintainers@dsh-desktop>",
+      "artifactName": "${productName}-Linux-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

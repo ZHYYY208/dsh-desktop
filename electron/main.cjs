@@ -8,7 +8,10 @@ const fs = require('node:fs');
 const isPackaged = app.isPackaged;
 const RESOURCES_DIR = isPackaged ? process.resourcesPath : path.join(__dirname, '..');
 const RUNTIME_DIR = path.join(RESOURCES_DIR, 'runtime');
-const NODE_BINARY = path.join(RESOURCES_DIR, 'node-runtime', 'node.exe');
+// Windows runtime extracts to node-runtime/node.exe; Linux to node-runtime/bin/node.
+const NODE_BINARY = process.platform === 'win32'
+  ? path.join(RESOURCES_DIR, 'node-runtime', 'node.exe')
+  : path.join(RESOURCES_DIR, 'node-runtime', 'bin', 'node');
 
 const CLI_ENTRY = path.join(
   RUNTIME_DIR,

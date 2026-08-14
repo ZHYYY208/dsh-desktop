@@ -30,35 +30,26 @@ dist/win-unpacked/DSH Desktop.exe   # 免安装版，可直接运行
 
 ## Ubuntu Linux：本地构建
 
-需要 `curl`、`tar`、`xz`、`python3`、`dpkg-deb`（Ubuntu 自带）。
+需要 Linux 与 Node.js（仅用于运行构建工具）。Electron 原生窗口版，与 Windows 同一套外壳。
 
 ```sh
-bash linux/build-deb.sh --out linux/dist
+npm install          # 安装 electron + electron-builder
+npm run dist:linux   # 自动准备运行时并打包 .deb
 ```
 
-脚本会：下载独立 Node 到 `linux/node-runtime/` → 用内置 Node 在 `linux/runtime/` 安装 `@deepseek-ai/dsh`（与 Windows 同一个 npm 版本）→ 组装并生成 `.deb`。
+`npm run dist:linux` 会依次执行：
 
-产物：`linux/dist/dsh-desktop_<版本>_<架构>.deb`
+1. `scripts/prepare-runtime-linux.cjs` — 下载独立 Linux Node 24.19.0 到 `node-runtime/`
+2. 用内置 Node 在 `runtime/` 里 `npm install @deepseek-ai/dsh`
+3. `electron-builder --linux deb` — 打包出 `.deb`
 
-常用参数：
+产物：`dist/DSH Desktop-Linux-1.0.0.deb`
 
-| Flag | 含义 | 默认 |
-| --- | --- | --- |
-| `--version V` | dsh npm 版本 | `0.1.0-rc.6` |
-| `--node-version V` | 内置 Node 版本 | `24.19.0` |
-| `--node-tarball FILE` | 使用已下载的 Node tarball | 自动从 nodejs.org 下载 |
-| `--arch ARCH` | `amd64` / `arm64` | `dpkg --print-architecture` |
-| `--out DIR` | 输出目录 | `linux/dist` |
+> 国内网络较慢时可用 npmmirror 加速：`npm_config_registry=https://registry.npmmirror.com ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ npm run dist:linux`
 
-本地验证安装包：
+本地调试运行：`npm start`（需先 `npm run prepare:runtime:linux`）
 
-```sh
-dpkg-deb -x linux/dist/*.deb /tmp/debext
-/tmp/debext/opt/dsh-desktop/node/bin/node \
-  /tmp/debext/opt/dsh-desktop/app/node_modules/@deepseek-ai/dsh/lib/bin.js --version
-```
-
-> 升级 dsh 版本：修改 `linux/build-deb.sh` 与 `scripts/prepare-runtime.cjs` 中的 `@deepseek-ai/dsh@<版本>`（两处需保持一致）。npm 上最新版本：`npm view @deepseek-ai/dsh version`。
+> 升级 dsh 版本：同时修改 `scripts/prepare-runtime.cjs` 与 `scripts/prepare-runtime-linux.cjs` 中的 `@deepseek-ai/dsh@<版本>`（两处需保持一致）。npm 上最新版本：`npm view @deepseek-ai/dsh version`。
 
 ## Windows 代码签名
 
@@ -109,51 +100,43 @@ CI 流程已支持证书签名。在仓库 **Settings → Secrets and variables 
 
   产物：`build/icon.png`（主图标）、`build/icon.ico`（Windows 多尺寸）、`build/icons/{32..512}.png`（Linux hicolor）、`electron/splash-icon.png`（启动屏）。
 - Windows：Electron 启动时先显示渐变玻璃拟态启动屏（`electron/splash.html`），dsh 服务就绪后切入主窗口；主窗口 `show:false` + `ready-to-show` 避免白屏闪烁。
-- Linux：`.deb` 自动安装多尺寸图标到 hicolor，应用菜单使用 `dsh-desktop` 图标。
+- Linux：`.deb` 由 electron-builder 生成，自动安装多尺寸图标与桌面入口。
 
 ## 目录结构
 
 ```
 ├── electron/
-│   ├── main.cjs            # Electron 主进程：启动屏 + 拉起服务、打开窗口、退出时清理（Windows）
+│   ├── main.cjs            # Electron 主进程：启动屏 + 拉起服务、打开窗口、退出时清理（Windows/Linux 共用）
 │   ├── splash.html         # 渐变玻璃拟态启动屏
 │   └── splash-icon.png     # 启动屏图标（由 make-icons.py 生成）
 ├── scripts/
 │   ├── setup-node-runtime.cjs   # 下载/解压独立 Node（Windows）
-│   └── prepare-runtime.cjs      # 安装 @deepseek-ai/dsh 运行时（Windows）
-├── linux/
-│   ├── build-deb.sh        # 打包 .deb（Ubuntu Linux）
-│   ├── dsh                 # Linux 的 dsh 启动器
-│   ├── dsh-desktop         # Linux 桌面启动器（起服务 + 打开浏览器）
-│   ├── dsh-desktop.desktop # 应用菜单入口
-│   └── postinst            # 安装后刷新图标/桌面数据库
-├── runtime/                # dsh CLI + 依赖（Windows 构建时生成，不入 git）
-├── node-runtime/           # 独立 Node 24.19.0（Windows 构建时生成，不入 git）
-├── linux/runtime/          # dsh CLI + 依赖（Linux 构建时生成，不入 git）
-├── linux/node-runtime/     # 独立 Node 24.19.0（Linux 构建时生成，不入 git）
+│   ├── prepare-runtime.cjs      # 安装 @deepseek-ai/dsh 运行时（Windows）
+│   └── prepare-runtime-linux.cjs # 下载 Linux Node + 安装 dsh 运行时（Linux）
+├── runtime/                # dsh CLI + 依赖（构建时生成，不入 git，按平台写入）
+├── node-runtime/           # 独立 Node 24.19.0（构建时生成，不入 git，按平台写入）
 ├── build/
 │   ├── make-icons.py       # 图标生成脚本（渐变 + 玻璃拟态）
 │   ├── icon.png            # 512x512 主图标
 │   ├── icon.ico            # Windows 多尺寸图标
 │   ├── icons/              # Linux hicolor 各尺寸图标
 │   └── selfsigned.pfx      # 自签名证书（不入 git）
-├── dist/                   # Windows 打包产物（不入 git）
-├── linux/dist/             # Linux 打包产物（不入 git）
+├── dist/                   # 打包产物（不入 git）
 └── .github/workflows/
     ├── build.yml           # Windows NSIS 安装器
-    └── build-linux.yml     # Ubuntu Linux .deb
+    └── build-linux.yml     # Ubuntu Linux .deb（Electron）
 ```
 
 ## 常见问题
 
 **Q: 打开后窗口是空白的？**
-后台服务可能启动失败。正常情况下主进程会弹出错误对话框；也可以手动验证：运行 `dist\win-unpacked\resources\node-runtime\node.exe "dist\win-unpacked\resources\runtime\node_modules\@deepseek-ai\dsh\lib\bin.js" web --port 8080`，浏览器访问 `http://127.0.0.1:8080`。Linux 下查看 `~/.local/share/dsh-desktop/web.log`。
+后台服务可能启动失败。正常情况下主进程会弹出错误对话框；也可以手动验证：运行 `dist\win-unpacked\resources\node-runtime\node.exe "dist\win-unpacked\resources\runtime\node_modules\@deepseek-ai\dsh\lib\bin.js" web --port 8080`，浏览器访问 `http://127.0.0.1:8080`（Linux 下把路径换成 `dist/linux-unpacked/resources/...` 与 `bin/node`）。
 
 **Q: 我想升级 dsh 版本？**
-同时修改 `scripts/prepare-runtime.cjs` 与 `linux/build-deb.sh` 中的 `@deepseek-ai/dsh@<版本>`，然后重新构建对应平台。npm 上最新版本：`npm view @deepseek-ai/dsh version`。
+同时修改 `scripts/prepare-runtime.cjs` 与 `scripts/prepare-runtime-linux.cjs` 中的 `@deepseek-ai/dsh@<版本>`，然后重新构建对应平台。npm 上最新版本：`npm view @deepseek-ai/dsh version`。
 
 **Q: 端口冲突怎么办？**
-Windows 默认用 `--port 0` 自动分配空闲端口；Linux 默认 3080，可通过 `DSH_WEB_PORT` 环境变量覆盖，无需修改代码。
+两个平台都用 `--port 0` 自动分配空闲端口，无需修改代码。
 
 ## License
 
