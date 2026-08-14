@@ -1,0 +1,43 @@
+name: build-deb
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Debian packaging tools
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev xz-utils curl
+
+      - name: Build .deb
+        run: bash linux/build-deb.sh --out linux/dist
+
+      - name: Verify the packaged CLI
+        run: |
+          mkdir -p verify && cd verify
+          dpkg-deb -x ../linux/dist/*.deb .
+          ./opt/dsh-desktop/node/bin/node ./opt/dsh-desktop/app/node_modules/@deepseek-ai/dsh/lib/bin.js --version
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-desktop-linux-deb
+          path: linux/dist/*.deb
+          if-no-files-found: error
+
+      - name: Attach .deb to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: linux/dist/*.deb
+          generate_release_notes: true

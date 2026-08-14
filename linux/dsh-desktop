@@ -1,0 +1,49 @@
+#!/bin/sh
+# DSH Desktop desktop launcher.
+#
+# Starts the dsh Web UI (if it is not already running) and opens it in the
+# default browser. The server keeps running in the background after the
+# browser window closes; launching again just reopens the page.
+#
+# Overrides (all optional):
+#   DSH_WEB_URL   e.g. http://127.0.0.1:3080
+#   DSH_WEB_PORT  server port to probe/start on (default 3080)
+#   DSH_WEB_LOG_DIR  log directory (default $XDG_DATA_HOME/dsh-desktop)
+set -eu
+
+URL="${DSH_WEB_URL:-http://127.0.0.1:3080}"
+PORT="${DSH_WEB_PORT:-3080}"
+LOG_DIR="${DSH_WEB_LOG_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dsh-desktop}"
+
+is_up() {
+  python3 - "$PORT" <<'PY' 2>/dev/null
+import socket, sys
+try:
+    sock = socket.create_connection(("127.0.0.1", int(sys.argv[1])), timeout=2)
+    sock.close()
+    sys.exit(0)
+except OSError:
+    sys.exit(1)
+PY
+}
+
+if ! is_up; then
+  mkdir -p "$LOG_DIR"
+  nohup /usr/bin/dsh --profile web >>"$LOG_DIR/web.log" 2>&1 &
+  i=0
+  while [ "$i" -lt 120 ]; do
+    if is_up; then break; fi
+    i=$((i + 1))
+    sleep 1
+  done
+  if ! is_up; then
+    echo "dsh-desktop: web UI failed to start; see $LOG_DIR/web.log" >&2
+    exit 1
+  fi
+fi
+
+if command -v xdg-open >/dev/null 2>&1; then
+  xdg-open "$URL"
+else
+  echo "DSH Desktop web UI is running at $URL"
+fi

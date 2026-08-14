@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      color: #fff;
+      background: transparent;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      background: linear-gradient(135deg, #14214f 0%, #3d6fff 55%, #7c4dff 100%);
+      border-radius: 16px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* soft glass light top-left, matching the icon */
+    .stage::before {
+      content: "";
+      position: absolute;
+      top: -30%;
+      left: -20%;
+      width: 90%;
+      height: 90%;
+      background: radial-gradient(circle, rgba(255,255,255,.28), rgba(255,255,255,0) 60%);
+      pointer-events: none;
+    }
+    .stage::after {
+      content: "";
+      position: absolute;
+      bottom: -35%;
+      right: -20%;
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(circle, rgba(255,255,255,.10), rgba(255,255,255,0) 60%);
+      pointer-events: none;
+    }
+
+    .tile {
+      position: relative;
+      width: 108px;
+      height: 108px;
+      border-radius: 26px;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.45);
+      box-shadow: 0 18px 40px rgba(6, 14, 60, .45), inset 0 1px 0 rgba(255,255,255,.55);
+      backdrop-filter: blur(14px) saturate(1.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tile img { width: 76px; height: 76px; display: block; }
+
+    .title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 12px rgba(0,0,0,.35);
+    }
+    .sub {
+      font-size: 12px;
+      letter-spacing: 1px;
+      opacity: .82;
+      text-shadow: 0 1px 8px rgba(0,0,0,.3);
+    }
+
+    .bar {
+      margin-top: 6px;
+      width: 220px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      width: 40%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), #fff, rgba(255,255,255,0));
+      animation: slide 1.1s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0%   { transform: translateX(-110%); }
+      100% { transform: translateX(320%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="tile"><img src="./splash-icon.png" alt="" /></div>
+    <div class="title">DSH DESKTOP</div>
+    <div class="sub">正在启动 DeepSeek Harness&hellip;</div>
+    <div class="bar"><i></i></div>
+  </div>
+</body>
+</html>

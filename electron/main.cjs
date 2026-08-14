@@ -21,6 +21,7 @@ const CLI_ENTRY = path.join(
 
 let childProcess = null;
 let mainWindow = null;
+let splashWindow = null;
 
 function log(...args) {
   console.log('[dsh-desktop]', ...args);
@@ -105,13 +106,44 @@ function stopServer() {
   }
 }
 
-async function createWindow(url) {
+async function createSplash() {
+  splashWindow = new BrowserWindow({
+    width: 460,
+    height: 300,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    show: false,
+    alwaysOnTop: true,
+    center: true,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+  splashWindow.once('ready-to-show', () => splashWindow.show());
+  splashWindow.on('closed', () => {
+    splashWindow = null;
+  });
+}
+
+function closeSplash() {
+  if (splashWindow) {
+    splashWindow.close();
+    splashWindow = null;
+  }
+}
+
+function createWindow(url) {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 860,
     minWidth: 900,
     minHeight: 600,
     title: 'DSH Desktop',
+    show: false,
+    backgroundColor: '#0d1630',
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
@@ -126,16 +158,22 @@ async function createWindow(url) {
     return { action: 'deny' };
   });
 
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    closeSplash();
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
     stopServer();
   });
 
-  await mainWindow.loadURL(url);
+  mainWindow.loadURL(url);
 }
 
-app.whenReady().then(async () => {
+async function boot() {
   if (!runtimeReady()) {
+    closeSplash();
     dialog.showErrorBox(
       'DSH Desktop',
       'The dsh runtime is missing.\n\nRun "npm run prepare:runtime" before launching.'
@@ -144,20 +182,25 @@ app.whenReady().then(async () => {
     return;
   }
 
+  createSplash();
+
   try {
     const url = await startServer();
     await createWindow(url);
   } catch (err) {
     errlog('failed to boot:', err);
+    closeSplash();
     dialog.showErrorBox('DSH Desktop', 'Failed to start the dsh server:\n\n' + err.message);
     app.quit();
   }
+}
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0 && mainWindow === null) {
-      createWindow();
-    }
-  });
+app.whenReady().then(boot);
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0 && mainWindow === null) {
+    boot();
+  }
 });
 
 app.on('before-quit', () => {

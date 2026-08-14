@@ -2,6 +2,11 @@ node_modules/
 dist/
 runtime/
 node-runtime/
+linux/runtime/
+linux/node-runtime/
+linux/.home/
+linux/dist/
 *.log
+*.deb
 *.pfx
 build/cert-password.txt
