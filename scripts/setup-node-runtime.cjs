@@ -57,7 +57,9 @@ module.exports = (async () => {
   const pwsh = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
   run(pwsh, ['-NoProfile', '-Command', `Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${staging}' -Force`]);
 
-  fs.renameSync(path.join(staging, DIST_NAME), NODE_RUNTIME_DIR);
+  // The staging dir lives under the OS temp drive while the repo may be on
+  // another drive; rename() across devices fails with EXDEV, so copy instead.
+  fs.cpSync(path.join(staging, DIST_NAME), NODE_RUNTIME_DIR, { recursive: true });
   fs.rmSync(staging, { recursive: true, force: true });
   fs.rmSync(zipPath, { force: true });
 
