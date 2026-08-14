@@ -28,7 +28,7 @@ jobs:
         run: node scripts/prepare-runtime-linux.cjs
 
       - name: Build .deb (Electron native app)
-        run: npx electron-builder --linux deb
+        run: npx electron-builder --linux deb --publish never
 
       - name: Verify the packaged CLI is inside the .deb
         run: |
