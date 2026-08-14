@@ -75,22 +75,17 @@ CI 流程已支持证书签名。只需在仓库 **Settings → Secrets and vari
 
 ## 发布到 GitHub Releases
 
-推送代码后：
-
-```powershell
-git remote add origin https://github.com/ZHYYY208/dsh-desktop.git
-git push -u origin main
-```
-
 两种发布方式：
 
 1. **手动**：仓库页面 **Actions → build-installer → Run workflow**，构建完成后 `DSH Desktop-Setup-*.exe` 会作为 artifact 下载
-2. **自动**：打标签即自动构建并挂到 Release
+2. **自动（tag 触发）**：推送版本标签即触发 GitHub Actions 构建，产物同样作为 artifact 下载：
 
    ```powershell
    git tag v1.0.0
    git push origin v1.0.0
    ```
+
+> CI 构建的安装包默认**不签名**（本机有自签名证书时，请在仓库 Settings → Secrets 配置 `WINDOWS_CERT_BASE64` / `WINDOWS_CERT_PASSWORD`，CI 会自动签名）。官方 Release 上的已签名安装包由本机 `npm run dist` 构建后手动上传：在 Release 页面点 **Edit → 拖入安装包 → 发布**。
 
 ## 目录结构
 
