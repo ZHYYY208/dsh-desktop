@@ -6,6 +6,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -25,7 +28,7 @@ jobs:
         run: node scripts/prepare-runtime.cjs
 
       - name: Build Windows installer (NSIS, signed if cert secret is set)
-        run: npx electron-builder --win nsis
+        run: npx electron-builder --win nsis --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
@@ -37,3 +40,10 @@ jobs:
           name: dsh-desktop-windows
           path: dist/*.exe
           if-no-files-found: error
+
+      - name: Attach .exe to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*.exe
+          fail_on_unmatched_files: true
