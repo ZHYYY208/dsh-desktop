@@ -1,6 +1,11 @@
 'use strict';
 
+// The app installs under "/opt/DSH Desktop" (productName keeps a space), and
+// Chromium's SUID sandbox helper cannot exec a path containing a space, which
+// fatally aborts the zygote at startup ("LaunchProcess: failed to execvp").
+// Disabling the sandbox is the standard fix for such install paths.
 const { app, BrowserWindow, dialog } = require('electron');
+app.commandLine.appendSwitch('no-sandbox');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 const fs = require('node:fs');

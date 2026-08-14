@@ -22,4 +22,11 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -q -f -t /usr/share/icons/hicolor >/dev/null 2>&1 || true
 fi
 
+# Belt-and-suspenders: guarantee the desktop entry also disables the sandbox
+# (see electron/main.cjs), in case the install path keeps a space.
+desktop="/usr/share/applications/dsh-desktop.desktop"
+if [ -f "$desktop" ] && ! grep -q -- "--no-sandbox" "$desktop"; then
+  sed -i 's/^Exec=\(.*\)/Exec=\1 --no-sandbox/' "$desktop" 2>/dev/null || true
+fi
+
 exit 0
