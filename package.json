@@ -67,6 +67,9 @@
       "maintainer": "dsh-desktop <maintainers@dsh-desktop>",
       "artifactName": "${productName}-Linux-${version}.${ext}"
     },
+    "deb": {
+      "afterInstall": "packaging/linux/after-install.sh"
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
