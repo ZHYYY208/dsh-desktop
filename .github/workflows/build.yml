@@ -24,10 +24,12 @@ jobs:
       - name: Prepare runtime (downloads bundled Node + installs dsh CLI)
         run: node scripts/prepare-runtime.cjs
 
-      - name: Build Windows installer (NSIS)
+      - name: Build Windows installer (NSIS, signed if cert secret is set)
         run: npx electron-builder --win nsis
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4

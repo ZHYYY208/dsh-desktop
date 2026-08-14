@@ -3,3 +3,5 @@ dist/
 runtime/
 node-runtime/
 *.log
+*.pfx
+build/cert-password.txt
