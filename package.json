@@ -1,0 +1,71 @@
+{
+  "name": "dsh-desktop",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness (dsh) Windows desktop app - wraps the dsh web UI in an Electron shell with a local runtime.",
+  "main": "electron/main.cjs",
+  "author": "dsh-desktop",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prepare:runtime": "node scripts/prepare-runtime.cjs",
+    "start": "electron .",
+    "dist": "npm run prepare:runtime && electron-builder --win nsis",
+    "dist:portable": "npm run prepare:runtime && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  },
+  "build": {
+    "appId": "com.deepseek.dsh-desktop",
+    "productName": "DSH Desktop",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "runtime",
+        "to": "runtime",
+        "filter": [
+          "**/*",
+          "!**/*.md"
+        ]
+      },
+      {
+        "from": "node-runtime",
+        "to": "node-runtime",
+        "filter": [
+          "node.exe",
+          "node_modules/**/*",
+          "npm/**/*",
+          "npm.cmd",
+          "npm.ps1",
+          "LICENSE",
+          "README.md"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DSH Desktop"
+    }
+  }
+}
