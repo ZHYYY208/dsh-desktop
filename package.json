@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "DeepSeek Harness (dsh) Windows desktop app - wraps the dsh web UI in an Electron shell with a local runtime.",
   "main": "electron/main.cjs",
   "author": "dsh-desktop",
