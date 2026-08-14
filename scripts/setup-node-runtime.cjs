@@ -40,7 +40,7 @@ function run(cmd, args, opts = {}) {
   }
 }
 
-(async () => {
+module.exports = (async () => {
   if (fs.existsSync(NODE_BINARY)) {
     console.log('[dsh-desktop] node-runtime already present at', NODE_BINARY);
     return;
