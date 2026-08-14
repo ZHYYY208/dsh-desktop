@@ -2,119 +2,62 @@
 
 DeepSeek Harness（`dsh`）的 Windows 桌面客户端。
 
-把官方 [`deepseek-ai/deepseek-harness`](https://github.com/deepseek-ai/deepseek-harness) 的 Web 界面封装成一个原生 Windows 桌面应用：内置独立 Node.js 运行时和 `@deepseek-ai/dsh` CLI，启动后自动在本地起服务，再用 Electron 窗口打开界面。开箱即用，无需安装 Node.js。
+一个开箱即用的本地 AI 助手桌面应用：把官方 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 的完整 Web 界面封装成原生 Windows 程序，双击即可使用，无需安装 Node.js 或任何额外环境。
 
-## 功能
+## 功能特性
 
-- ✅ 双击即用，无需安装 Node.js / pnpm / 任何依赖
-- ✅ 自带 `dsh web` 完整界面（会话、工具调用、文件访问、终端等）
-- ✅ 双击安装包即可安装（NSIS 安装器），可自定义安装目录
-- ✅ 内置 CLI 版本：`@deepseek-ai/dsh@0.1.0-rc.6`
-- ✅ 自动选空闲端口（`--port 0`），避免端口冲突
-- ✅ 关闭窗口自动停止后台服务
+- ✅ **免环境安装** — 内置独立 Node.js 运行环境，装完即用
+- ✅ **完整功能** — 会话、工具调用、文件操作、终端、技能（Skills）等 deepseek-harness 全部能力
+- ✅ **本地运行** — 数据全部保存在本机，不经过任何第三方服务器
+- ✅ **界面友好** — 原生窗口 + 浏览器级交互体验
+- ✅ **自动端口** — 每次启动自动分配空闲端口，无需手动配置
+
+## 下载安装
+
+1. 前往 [GitHub Releases](https://github.com/ZHYYY208/dsh-desktop/releases) 页面
+2. 下载最新版安装包：`DSH.Desktop-Setup-<版本>.exe`
+3. 双击运行，按提示完成安装（可自定义安装目录）
+4. 从开始菜单或桌面快捷方式打开 **DSH Desktop**
+
+> **遇到 SmartScreen 提示？** 安装包使用自签名证书，首次运行请点击 **「更多信息」→「仍要运行」**。
 
 ## 系统要求
 
-- Windows 10 / Windows 11（x64）
-- 首次安装约需 600MB 磁盘空间
+- Windows 10 / 11（64 位）
+- 安装后约占用 600MB 磁盘空间
 
-## 安装
+## 使用说明
 
-1. 从 [Releases](https://github.com/ZHYYY208/dsh-desktop/releases) 页面下载 `DSH Desktop-Setup-<版本>.exe`
-2. 双击安装，按提示完成
-3. 打开「DSH Desktop」即可使用
+- 首次启动会自动完成初始化，随后进入聊天界面
+- 数据默认保存在 `C:\Users\<你的用户名>\.dsh`，卸载时不会自动删除，如需清理请手动删除该文件夹
+- 会话、配置等均由应用自动管理，一般无需手动操作
 
-> SmartScreen 提示"未知发布者"：安装包使用自签名证书，点 **更多信息 → 仍要运行** 即可。
-> 想要彻底消除提示，见下方[代码签名](#代码签名)。
+## 卸载
 
-## 本地构建
-
-需要本机已安装 Node.js（仅用于运行构建工具）。
-
-```powershell
-npm install          # 安装 electron + electron-builder
-npm run dist         # 自动准备运行时并打包 NSIS 安装器
-```
-
-`npm run dist` 会依次执行：
-
-1. `scripts/setup-node-runtime.cjs` — 若缺失则自动下载解压独立 Node 24.19.0 到 `node-runtime/`
-2. `scripts/prepare-runtime.cjs` — 用内置 Node 在 `runtime/` 里 `npm install @deepseek-ai/dsh`
-3. `electron-builder --win nsis` — 打包出 `.exe` 安装器
-
-产物：
-
-```
-dist/DSH Desktop-Setup-1.0.0.exe    # 安装器
-dist/win-unpacked/DSH Desktop.exe   # 免安装版，可直接运行
-```
-
-本地调试运行：`npm start`
-
-## 代码签名
-
-Windows 代码签名需要数字证书。只有**商业受信任证书**（如 DigiCert、Sectigo）才能彻底消除 SmartScreen 警告。本项目支持两种方式：
-
-### 1. 自签名证书（本项目已启用）
-
-已生成自签名证书 `build/selfsigned.pfx`（密码见 `build/cert-password.txt`，均已加入 `.gitignore`）并用 signtool 对本地产物签名 + DigiCert 时间戳。
-
-- 验证签名：`Get-AuthenticodeSignature .\dist\"DSH Desktop-Setup-1.0.0.exe"`
-- 信任该证书（可选）：双击安装 `selfsigned.pfx`，放入"受信任的根证书颁发机构"后，签名即被系统信任
-
-### 2. GitHub Actions 自动签名
-
-CI 流程已支持证书签名。只需在仓库 **Settings → Secrets and variables → Actions** 添加：
-
-| Secret | 内容 |
-|---|---|
-| `WINDOWS_CERT_BASE64` | 证书 pfx 的 Base64 字符串（`certutil -encode selfsigned.pfx out.txt` 得到） |
-| `WINDOWS_CERT_PASSWORD` | pfx 证书密码 |
-
-设置后，每次 GitHub Actions 构建出的安装包都会自动签名。
-
-## 发布到 GitHub Releases
-
-两种发布方式：
-
-1. **手动**：仓库页面 **Actions → build-installer → Run workflow**，构建完成后 `DSH Desktop-Setup-*.exe` 会作为 artifact 下载
-2. **自动（tag 触发）**：推送版本标签即触发 GitHub Actions 构建，产物同样作为 artifact 下载：
-
-   ```powershell
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-> CI 构建的安装包默认**不签名**（本机有自签名证书时，请在仓库 Settings → Secrets 配置 `WINDOWS_CERT_BASE64` / `WINDOWS_CERT_PASSWORD`，CI 会自动签名）。官方 Release 上的已签名安装包由本机 `npm run dist` 构建后手动上传：在 Release 页面点 **Edit → 拖入安装包 → 发布**。
-
-## 目录结构
-
-```
-├── electron/
-│   └── main.cjs            # Electron 主进程：拉起服务、打开窗口、退出时清理
-├── scripts/
-│   ├── setup-node-runtime.cjs   # 下载/解压独立 Node
-│   └── prepare-runtime.cjs      # 安装 @deepseek-ai/dsh 运行时
-├── runtime/                # dsh CLI + 依赖（构建时生成，不入 git）
-├── node-runtime/           # 独立 Node 24.19.0（构建时生成，不入 git）
-├── build/
-│   ├── icon.png            # 应用图标
-│   └── selfsigned.pfx      # 自签名证书（不入 git）
-├── dist/                   # 打包产物（不入 git）
-└── .github/workflows/build.yml
-```
+打开 **设置 → 应用 → 已安装的应用**，找到「DSH Desktop」，点击卸载即可。
 
 ## 常见问题
 
-**Q: 打开后窗口是空白的？**
-后台服务可能启动失败。正常情况下主进程会弹出错误对话框；也可以手动验证：运行 `dist\win-unpacked\resources\node-runtime\node.exe "dist\win-unpacked\resources\runtime\node_modules\@deepseek-ai\dsh\lib\bin.js" web --port 8080`，浏览器访问 `http://127.0.0.1:8080`。
+**Q：打开后窗口是空白的？**
+极少数情况下本地服务可能启动失败。请彻底关闭应用后重新打开；仍不行的话，请在仓库提交 [Issue](https://github.com/ZHYYY208/dsh-desktop/issues) 并附上截图。
 
-**Q: 我想升级 dsh 版本？**
-修改 `scripts/prepare-runtime.cjs` 中的 `@deepseek-ai/dsh@<版本>`，重新 `npm run dist`。npm 上最新版本：`npm view @deepseek-ai/dsh version`。
+**Q：SmartScreen 总是弹"未知发布者"？**
+因为目前使用自签名证书签名。要彻底消除提示，需要商业代码签名证书（收费）。在获得正式证书前，点「更多信息 → 仍要运行」即可正常使用。
 
-**Q: 端口冲突怎么办？**
-应用默认用 `--port 0` 自动分配空闲端口，无需关心。
+**Q：我的数据和配置存在哪里？**
+`C:\Users\<你的用户名>\.dsh`。备份该文件夹即可备份全部会话数据。
+
+**Q：如何升级到新版本？**
+关注 [Releases](https://github.com/ZHYYY208/dsh-desktop/releases) 页面，下载新版安装包直接覆盖安装即可，数据不会丢失。
+
+## 反馈
+
+使用中遇到问题或有建议，欢迎在 [GitHub Issues](https://github.com/ZHYYY208/dsh-desktop/issues) 提交。
 
 ## License
 
-MIT。DeepSeek Harness 相关版权归其原始作者所有。
+本项目基于 MIT 协议开源。DeepSeek Harness 相关版权归其原作者所有。
+
+---
+
+维护者/开发者请参阅 [DEVELOPMENT.md](./DEVELOPMENT.md)。
